@@ -1,0 +1,67 @@
+/* --- 全体的なスタイル --- */
+body {
+    font-family: Arial, sans-serif; /* 使用するフォントの指定 */
+    background-color: #f4f4f9; /* 背景色 */
+    color: #333; /* 文字の色 */
+    margin: 0;
+    padding: 0;
+}
+
+/* メインコンテンツを囲むコンテナのスタイル */
+.container {
+    max-width: 600px; /* 最大幅 */
+    margin: 50px auto; /* 上下に50px、左右は自動（中央寄せ） */
+    padding: 20px;
+    background-color: #fff; /* 背景を白に */
+    border-radius: 8px; /* 角を丸くする */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 影をつける */
+}
+
+h1 {
+    text-align: center; /* 中央揃え */
+    color: #007bff; /* タイトルの色 */
+}
+
+/* --- フォームのスタイル --- */
+form {
+    display: flex; /* 要素を横並びにする */
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    flex-grow: 1; /* 残りのスペースを全て使用する */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px; /* 左側だけ角を丸くする */
+    font-size: 16px;
+}
+
+input[type="submit"] {
+    background-color: #007bff; /* ボタンの色 */
+    color: white; /* 文字の色 */
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer; /* マウスオーバー時にカーソルをポインターにする */
+    border-radius: 0 4px 4px 0; /* 右側だけ角を丸くする */
+}
+
+/* --- リストのスタイル --- */
+ul {
+    list-style: none; /* 点（・）を消す */
+    padding: 0;
+}
+
+li {
+    background-color: #e9ecef;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between; /* 内容とIDを左右に配置 */
+    align-items: center;
+}
+
+.task-id {
+    font-size: 0.8em;
+    color: #6c757d;
+}

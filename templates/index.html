@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDoリスト</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>シンプルなToDoリスト</h1>
+
+        <form method="POST" action="/">
+            <input type="text" name="content" id="content" placeholder="新しいタスクを入力" required>
+            <input type="submit" value="タスクを追加">
+        </form>
+
+        <hr>
+
+        {% if todos %}
+            <ul>
+                {% for todo in todos %}
+                    <li>
+                        {{ todo.content }} 
+                        <span class="task-id">(ID: {{ todo.id }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>まだタスクがありません。追加してください！</p>
+        {% endif %}
+    </div>
+</body>
+</html>

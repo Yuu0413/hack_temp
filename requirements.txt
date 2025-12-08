@@ -1,0 +1,34 @@
+# --- プロジェクトに必要なPythonライブラリの一覧（Version Fixed） ---
+# チームメンバー全員が同じ環境で開発するための設計図です。
+# 「pip install -r requirements.txt」コマンドで全てがインストールされます。
+
+# 1. Webアプリケーションのコア（土台）
+
+# Flask: Webアプリケーション本体のフレームワーク。ユーザーのリクエストを受け付け、応答を返す「司令塔」。
+Flask==3.1.2
+# Werkzeug: Flaskの動作に必要な基盤ライブラリ。Webサーバーとの連携など低レベルな処理を担当。
+Werkzeug==3.1.4
+# Jinja2: HTMLテンプレートをPythonのデータ（例: Todoリスト）を使って動的に生成するためのテンプレートエンジン。
+Jinja2==3.1.6
+# MarkupSafe: Jinja2が依存するライブラリ。HTMLにデータを出力する際のセキュリティ（エスケープ処理）を担当。
+MarkupSafe==3.0.3
+# itsdangerous: Flaskのセッション機能などで使われる、データの署名や安全なシリアライズ（データ変換）を担当。
+itsdangerous==2.2.0
+
+# 2. データベース関連
+
+# Flask-SQLAlchemy: FlaskでSQLAlchemy（ORM）を簡単に設定・利用するための拡張機能。
+Flask-SQLAlchemy==3.1.1
+# SQLAlchemy: データベース（SQLite）を操作するための主要なライブラリ（ORM）。
+# SQL文を直接書かずに、Pythonのクラスやメソッドでデータベースを扱えるようにする。
+SQLAlchemy==2.0.44
+
+# 3. その他、依存ライブラリ
+
+# click: Flaskのコマンドラインインターフェース（flask runなど）の土台を提供。
+click==8.3.1
+# blinker: Flaskのシグナル（イベント通知）機能を提供。特定のイベント発生時に特定の処理を自動実行させる。
+blinker==1.9.0
+# typing_extensions: Pythonの型ヒント（Type Hinting）の機能を拡張。
+# コードの可読性と静的解析（コードチェック）を助ける。
+typing_extensions==4.15.0
