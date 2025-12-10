@@ -77,4 +77,4 @@ if __name__ == '__main__':
         # データベースファイルとテーブルが存在しない場合に作成（初回起動時のみ実行される）
         db.create_all()
     # デバッグモード（コード変更時に自動で再起動）でサーバーを起動
-    app.run(debug=True, port = 8080)
+    app.run(debug=True, port = 8081)
