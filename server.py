@@ -2,6 +2,10 @@ import os
 import datetime
 import calendar
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Length, EqualTo
 
 # dbパッケージから必要なモジュールをインポート
 from db import init_db, DB_PATH
@@ -12,6 +16,25 @@ from db import badge_setting as Setting
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_otaku_key'  # セッション情報の暗号化キー
+
+# --- フォームクラスの定義 (Flask-WTF) ---
+
+class LoginForm(FlaskForm):
+    """ログイン用フォーム"""
+    username = StringField('Username', validators=[DataRequired(), Length(min=1, max=50)])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
+
+class SignupForm(FlaskForm):
+    """サインアップ用フォーム"""
+    username = StringField('Username', validators=[DataRequired(), Length(min=1, max=50)])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    # パスワード確認用フィールド (確認用入力と一致するかチェック)
+    confirmed_password = PasswordField('Confirm Password', validators=[
+        DataRequired(), 
+        EqualTo('password', message='Passwords must match')
+    ])
+    submit = SubmitField('Sign Up')
 
 # --- ヘルパー関数 ---
 
@@ -68,7 +91,7 @@ def index():
     # 1. 指定日の集計データを取得
     daily_summary = Summary.get_daily_summary(user_id, target_date_str)
     
-    # 2. 時間帯別の詳細内訳を取得 (新規機能)
+    # 2. 時間帯別の詳細内訳を取得
     daily_details = Summary.get_daily_details_by_time_period(user_id, target_date_str)
     
     # 3. 設定（レート）を取得
@@ -93,25 +116,60 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """ログイン画面"""
-    if request.method == 'POST':
-        username = request.form['username']
-        
-        # 簡易ログイン：ユーザーがいればID取得、いなければ新規作成
-        user = User.get_user_by_username(username)
-        if user:
-            user_id = user['user_id']
-        else:
-            user_id = User.create_user(username, "default_password")
-        
-        session['user_id'] = user_id
-        session['username'] = username
-        return redirect(url_for('index'))
+    form = LoginForm()
     
-    return render_template('login.html')
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        
+        # ユーザー情報を取得
+        user = User.get_user_by_username(username)
+        
+        # ユーザーが存在し、かつパスワードハッシュが一致する場合
+        if user and check_password_hash(user['password_hash'], password):
+            session['user_id'] = user['user_id']
+            session['username'] = user['username']
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    
+    return render_template('login.html', form=form)
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    """サインアップ画面"""
+    form = SignupForm()
+    
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        
+        # 既にユーザーが存在しないかチェック
+        existing_user = User.get_user_by_username(username)
+        if existing_user:
+            flash('Username already exists.', 'warning')
+        else:
+            # パスワードをハッシュ化して保存
+            hashed_password = generate_password_hash(password)
+            user_id = User.create_user(username, hashed_password)
+            
+            if user_id:
+                # デフォルト設定を作成
+                Setting.create_default_settings(user_id)
+                flash('Account created! Please log in.', 'success')
+                return redirect(url_for('login'))
+            else:
+                flash('An error occurred during registration.', 'danger')
+
+    # テンプレート名は一般的な signup.html としていますが、
+    # 必要に応じて signup.mtml 等に変更してください。
+    return render_template('signup.html', form=form)
 
 @app.route('/logout')
 def logout():
     session.clear()
+    flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/add', methods=['POST'])
