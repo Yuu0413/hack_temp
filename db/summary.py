@@ -176,3 +176,83 @@ def get_monthly_summaries(user_id):
     ).fetchall()
     conn.close()
     return rows
+
+def get_daily_details_by_time_period(user_id, date_str):
+    """
+    指定した日付の購入データを時間帯(time_period)ごとに集計して返す。
+    """
+    conn = get_db_connection()
+    try:
+        # 修正ポイント:
+        # 1. 'amount' カラムはないので、各カテゴリの金額を合計して集計します。
+        # 2. 日付カラム名は 'purchase_date' です。
+        query = """
+            SELECT 
+                time_period, 
+                SUM(drink_amount + snack_amount + main_dish_amount + irregular_amount) as subtotal
+            FROM purchases
+            WHERE user_id = ? AND purchase_date = ?
+            GROUP BY time_period
+        """
+        rows = conn.execute(query, (user_id, date_str)).fetchall()
+        
+        # 結果を辞書にまとめる
+        result = {
+            '朝': 0,
+            '昼': 0,
+            '晩': 0,
+            'total': 0
+        }
+        
+        for row in rows:
+            time_period = row['time_period']
+            amount = row['subtotal']
+            
+            # データベースに保存された time_period ('朝', '昼', '晩') をキーにする
+            if time_period:
+                result[time_period] = amount
+            
+            # 総合計も計算
+            if amount:
+                result['total'] += amount
+                
+        return result
+        
+    finally:
+        conn.close()
+
+def get_period_details_by_date_range(user_id, start_date_str, end_date_str):
+    """
+    指定した期間（開始日〜終了日）の購入データを時間帯(time_period)ごとに集計して返す。
+    """
+    conn = get_db_connection()
+    try:
+        # 期間指定(>= start AND <= end)で集計
+        query = """
+            SELECT 
+                time_period, 
+                SUM(drink_amount + snack_amount + main_dish_amount + irregular_amount) as subtotal
+            FROM purchases
+            WHERE user_id = ? AND purchase_date >= ? AND purchase_date <= ?
+            GROUP BY time_period
+        """
+        rows = conn.execute(query, (user_id, start_date_str, end_date_str)).fetchall()
+        
+        result = {
+            '朝': 0, '昼': 0, '晩': 0, 'total': 0
+        }
+        
+        for row in rows:
+            time_period = row['time_period']
+            amount = row['subtotal']
+            
+            if time_period in result:
+                result[time_period] = amount
+            
+            if amount:
+                result['total'] += amount
+                
+        return result
+        
+    finally:
+        conn.close()
