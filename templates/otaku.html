@@ -1,52 +1,89 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>推し活換算（痛バ）</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f9f9f9; }
-        h1 { color: #333; }
-        .itabag-container {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr); /* 8列 */
-            gap: 5px;
-            width: 350px;
-            margin: 20px auto;
-            padding: 10px;
-            background-color: #eee;
-            border-radius: 10px;
-        }
-        .badge {
-            width: 35px;
-            height: 35px;
-            background-color: #ccc;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: white;
-        }
-        .badge.active {
-            background-color: #ff69b4; /* 獲得済みカラー */
-            border: 2px solid white;
-        }
-    </style>
-</head>
-<body>
-    <h1>今月の推し活換算（痛バ）</h1>
-    
-    <p>浪費金額: <strong>{{ "{:,}".format(data.monthly_total) }}円</strong> / 缶バッチ単価: {{ "{:,}".format(data.badge_price) }}円</p>
-    <p>獲得バッチ数: <strong>{{ data.earned_badges }}個</strong> / {{ data.itabag_count }}個</p>
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="mt-2">痛バ作成状況</h1>
+        
+        <div class="card-custom mx-auto" style="max-width: 500px;">
+            <p class="mb-1">浪費金額: <strong class="total-price">{{ "{:,}".format(data.monthly_total) }}円</strong></p>
+            <p class="text-muted small">換算レート: 1個 / 440円</p>
+            
+            {% set remaining = data.itabag_count - data.earned_badges %}
 
-    <div class="itabag-container">
-        {% for i in range(1, data.itabag_count + 1) %}
-            <div class="badge {% if i <= data.earned_badges %}active{% endif %}">
-                {% if i <= data.earned_badges %}{{ i }}{% endif %}
+            <div class="my-3 text-secondary">
+                現在 <strong>{{ data.earned_badges }}</strong> 個分を食べてしまいました...<br>
+                <span class="small">（1面完成まで：残り <strong>{% if remaining > 0 %}{{ remaining }}個{% else %}完成！{% endif %}</strong>）</span>
             </div>
-        {% endfor %}
-    </div>
 
-    <a href="{{ url_for('index') }}">戻る</a>
-</body>
-</html>
+            <div class="mb-3 d-flex gap-2 justify-content-center align-items-center">
+                <input type="file" id="oshi-upload" class="form-control form-control-sm text-dark" accept="image/*" style="max-width: 230px; background-color: #fff;">
+                <button class="btn btn-outline-danger btn-sm" onclick="clearOshiImage()">✕</button>
+            </div>
+
+            <div class="itabag-container mt-3" id="itabag-grid">
+                {% for i in range(1, data.itabag_count + 1) %}
+                    <div class="badge-item {% if i <= data.earned_badges %}active{% endif %}">
+                        {% if i <= data.earned_badges %}
+                           <span class="badge-number">{{ i }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="motivation-msg mt-4">
+                {% if data.earned_badges >= 40 %}
+                    <p class="text-danger fw-bold m-0">「1面完成...おめでとう。でもこれ、全部胃袋に消えたはずのお金なんだよね...？」</p>
+                {% elif data.earned_badges >= 30 %}
+                    <p class="m-0">「30個突破...もうあきらめて1面組む？それとも次こそ弁当作る？」</p>
+                {% elif data.earned_badges >= 20 %}
+                    <p class="m-0">「20個...推しへの投資は、食への投資より美容に良い（はず）。」</p>
+                {% elif data.earned_badges >= 10 %}
+                    <p class="m-0">「10個分。無駄に食べて還元されるのは、カードの請求と脂肪だけ。」</p>
+                {% elif data.earned_badges >= 5 %}
+                    <p class="m-0">「5個突破。あのご飯を我慢してれば、今頃手元にバッジがあったのに...」</p>
+                {% else %}
+                    <p class="text-success m-0">「まだ数個分。今なら引き返せる！明日からお弁当にしよう！」</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4 rounded-pill">ホームに戻る</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'oshi_badge_base64';
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) applyOshiImage(savedData);
+    });
+
+    document.getElementById('oshi-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64 = event.target.result;
+            localStorage.setItem(STORAGE_KEY, base64);
+            applyOshiImage(base64);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function applyOshiImage(url) {
+        const badges = document.querySelectorAll('.badge-item.active');
+        badges.forEach(badge => {
+            badge.style.backgroundImage = `url('${url}')`;
+            const num = badge.querySelector('.badge-number');
+            if (num) num.style.display = 'none';
+        });
+    }
+
+    function clearOshiImage() {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+    }
+</script>
+{% endblock %}

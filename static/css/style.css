@@ -1,67 +1,128 @@
-/* --- 全体的なスタイル --- */
+/* =========================================
+   1. フォントとテーマ定義
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');
+
+:root {
+    --primary-color: #ff85a2;
+    --primary-hover: #ff5c77;
+    --accent-color: #70d6ff;
+    --bg-color: #fff0f5;
+    --card-bg: #ffffff;
+    --text-color: #594a4e;
+    --border-radius: 20px;
+    --main-font: "Zen Maru Gothic", sans-serif;
+}
+
+body.theme-blue { --primary-color: #70d6ff; --primary-hover: #40c6e8; --accent-color: #ff85a2; --bg-color: #e6f7ff; --text-color: #405060; }
+body.theme-yellow { --primary-color: #ffde70; --primary-hover: #ffc107; --accent-color: #ff85a2; --bg-color: #fffbe5; --text-color: #5d5038; }
+body.theme-purple { --primary-color: #c2b1e8; --primary-hover: #a591d1; --accent-color: #ff85a2; --bg-color: #f5f0ff; --text-color: #4a3b50; }
+body.theme-green { --primary-color: #9ae8a8; --primary-hover: #79d187; --accent-color: #ff85a2; --bg-color: #e5fff5; --text-color: #354a3e; }
+
+/* =========================================
+   2. 基本設定
+   ========================================= */
+* { font-family: var(--main-font) !important; }
+
 body {
-    font-family: Arial, sans-serif; /* 使用するフォントの指定 */
-    background-color: #f4f4f9; /* 背景色 */
-    color: #333; /* 文字の色 */
+    background-color: var(--bg-color);
+    color: var(--text-color);
     margin: 0;
-    padding: 0;
+    padding-bottom: 50px;
+    line-height: 1.6;
+    transition: background-color 0.3s ease;
 }
 
-/* メインコンテンツを囲むコンテナのスタイル */
-.container {
-    max-width: 600px; /* 最大幅 */
-    margin: 50px auto; /* 上下に50px、左右は自動（中央寄せ） */
-    padding: 20px;
-    background-color: #fff; /* 背景を白に */
-    border-radius: 8px; /* 角を丸くする */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 影をつける */
+h1, h2, h3, h4, h5, h6 { font-weight: 900 !important; letter-spacing: 0.02em; text-align: center; margin-bottom: 20px; }
+
+.total-price { 
+    font-weight: 900 !important; 
+    color: var(--primary-color); 
+    display: inline-block;
 }
 
-h1 {
-    text-align: center; /* 中央揃え */
-    color: #007bff; /* タイトルの色 */
+.card-custom {
+    background-color: var(--card-bg); border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: none;
 }
 
-/* --- フォームのスタイル --- */
-form {
-    display: flex; /* 要素を横並びにする */
-    margin-bottom: 20px;
+/* =========================================
+   3. ボタン類 (テーマ連動)
+   ========================================= */
+.submit-btn, .btn-otaku {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 900 !important;
+    border-radius: 50px !important;
+    padding: 12px 30px !important;
+    font-size: 1.1rem !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    width: 100%;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
 }
 
-input[type="text"] {
-    flex-grow: 1; /* 残りのスペースを全て使用する */
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px 0 0 4px; /* 左側だけ角を丸くする */
-    font-size: 16px;
+.submit-btn:hover, .btn-otaku:hover {
+    background-color: var(--primary-hover) !important;
+    transform: scale(1.02);
 }
 
-input[type="submit"] {
-    background-color: #007bff; /* ボタンの色 */
-    color: white; /* 文字の色 */
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer; /* マウスオーバー時にカーソルをポインターにする */
-    border-radius: 0 4px 4px 0; /* 右側だけ角を丸くする */
+.selectable-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+
+.selectable-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 5px;
+    border-radius: 50px;
+    border: 2px solid #eee;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 700;
+    color: #888;
+    font-size: 0.9rem;
 }
 
-/* --- リストのスタイル --- */
-ul {
-    list-style: none; /* 点（・）を消す */
-    padding: 0;
+.selectable-btn.active {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
 }
 
-li {
-    background-color: #e9ecef;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between; /* 内容とIDを左右に配置 */
-    align-items: center;
+/* =========================================
+   4. ナビゲーション・パレット
+   ========================================= */
+.navbar-brand { font-weight: 900 !important; }
+.theme-palette-container {
+    position: absolute; top: 55px; right: 0; display: flex; gap: 12px; padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.95); border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 2px solid var(--primary-color); z-index: 1050; opacity: 0;
+    transform: translateY(-10px) scale(0.9); pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+.theme-palette-container.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.theme-dot { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; transition: 0.2s; }
+.dot-pink { background-color: #ff85a2; }
+.dot-blue { background-color: #70d6ff; }
+.dot-yellow { background-color: #ffde70; }
+.dot-purple { background-color: #c2b1e8; }
+.dot-green { background-color: #9ae8a8; }
 
-.task-id {
-    font-size: 0.8em;
-    color: #6c757d;
+/* =========================================
+   5. 痛バ・メッセージ
+   ========================================= */
+.itabag-container {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; 
+    padding: 15px; background: rgba(255,255,255,0.6);
+    border-radius: var(--border-radius); border: 3px dashed #ddd; margin: 0 auto; max-width: 500px;
 }
+.badge-item {
+    aspect-ratio: 1/1; background-color: #e0e0e0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #aaa; font-weight: bold; overflow: hidden;
+    border: 2px solid white; background-size: cover; background-position: center;
+}
+.badge-item.active { background-color: var(--primary-color); color: white; transform: scale(1.1); }
+.motivation-msg { background-color: #f8f9fa; border-radius: 15px; padding: 15px; font-size: 0.9rem; border-top: 3px solid var(--primary-color); }
