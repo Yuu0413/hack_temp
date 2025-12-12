@@ -1,45 +1,46 @@
 {% extends "base.html" %}
-
-{% block title %}Sign Up | onlinshop{% endblock %}
-
 {% block content %}
-<div class="page-header"><h1>Sign Up</h1></div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card-custom mt-4">
+            <h1 class="h3 mb-3">新規登録</h1>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">ユーザー名</label>
+                    {{ form.username(class="form-control", placeholder="ユーザー名 (必須)") }}
+                    {% for error in form.username.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">パスワード</label>
+                    {{ form.password(class="form-control", placeholder="パスワード (必須)") }}
+                    {% for error in form.password.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">パスワード確認</label>
+                    {{ form.confirmed_password(class="form-control", placeholder="パスワードを再入力してください") }}
+                    {% for error in form.confirmed_password.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <button type="submit" class="submit-btn mb-3">新規登録</button>
+            </form>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }}"> {{ message|capitalize }} </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-{% if form %}
-    {% for field in form.errors %}
-        {% for error in form.errors[field] %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endfor %}
-    {% endfor %}
-{% endif %}
-
-{% if form %}
-<form action="{{ url_for('signup') }}" method="POST" novalidate class="mb-10">
-    <div class="form-group mt-2">
-        <label for="username">{{ form.username.label }}</label>
-        {{ form.username(id="username", class="form-control", placeholder="Enter your username") }}
+            <div class="text-center mt-3">
+                <p class="small text-muted mb-0">すでにアカウントをお持ちですか？</p>
+                <a href="{{ url_for('login') }}" class="text-decoration-none fw-bold small" style="color: var(--primary-color);">
+                    ログインはこちら
+                </a>
+            </div>
+        </div>
     </div>
-    <div class="form-group mt-2">
-        <label for="password">{{ form.password.label }}</label>
-        {{ form.password(id="password", class="form-control", placeholder="Enter your password") }}
 </div>
-    <div class="form-group mt-2">
-        <label for="confirmed_password">{{ form.confirmed_password.label }}</label>
-        {{ form.confirmed_password(id="confirmed_password", class="form-control", placeholder="Enter your confirmed password") }}
-    </div>
-<div class="form-group mt-2">
-    {{ form.csrf_token }}
-    <input type="reset" class="btn btn-light" value="Reset">
-    {{ form.submit(class="btn btn-primary") }}
-    </div>
-</form>
-{% endif %}
 {% endblock %}
