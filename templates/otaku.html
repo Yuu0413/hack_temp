@@ -1,52 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>推し活換算（痛バ）</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f9f9f9; }
-        h1 { color: #333; }
-        .itabag-container {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr); /* 8列 */
-            gap: 5px;
-            width: 350px;
-            margin: 20px auto;
-            padding: 10px;
-            background-color: #eee;
-            border-radius: 10px;
-        }
-        .badge {
-            width: 35px;
-            height: 35px;
-            background-color: #ccc;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: white;
-        }
-        .badge.active {
-            background-color: #ff69b4; /* 獲得済みカラー */
-            border: 2px solid white;
-        }
-    </style>
-</head>
-<body>
-    <h1>今月の推し活換算（痛バ）</h1>
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center">
+    <h1>今月の痛バ作成状況</h1>
     
-    <p>浪費金額: <strong>{{ "{:,}".format(data.monthly_total) }}円</strong> / 缶バッチ単価: {{ "{:,}".format(data.badge_price) }}円</p>
-    <p>獲得バッチ数: <strong>{{ data.earned_badges }}個</strong> / {{ data.itabag_count }}個</p>
-
-    <div class="itabag-container">
-        {% for i in range(1, data.itabag_count + 1) %}
-            <div class="badge {% if i <= data.earned_badges %}active{% endif %}">
-                {% if i <= data.earned_badges %}{{ i }}{% endif %}
-            </div>
-        {% endfor %}
+    <div class="card-custom mx-auto" style="max-width: 500px;">
+        <p>浪費金額: <strong class="total-price">{{ "{:,}".format(data.monthly_total) }}円</strong></p>
+        <p>獲得バッジ: <strong>{{ data.earned_badges }}個</strong> / 目標: {{ data.itabag_count }}個</p>
+        
+        <div class="itabag-container mt-4">
+            {% for i in range(1, data.itabag_count + 1) %}
+                <div class="badge-item {% if i <= data.earned_badges %}active{% endif %}">
+                    {% if i <= data.earned_badges %}{{ i }}{% endif %}
+                </div>
+            {% endfor %}
+        </div>
     </div>
-
-    <a href="{{ url_for('index') }}">戻る</a>
-</body>
-</html>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mt-3">ホームに戻る</a>
+</div>
+{% endblock %}
