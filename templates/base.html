@@ -3,27 +3,59 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}推し活家計簿{% endblock %}</title>
+    <title>{% block title %}推し活家計簿 おしめし{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="theme-green"> <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">💎 おしめし</a>
-            <div class="navbar-nav ms-auto">
+<body class="">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow py-3">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold fs-3" href="{{ url_for('index') }}">💎 おしめし</a>
+            
+            <div class="d-flex align-items-center position-relative">
                 {% if session.get('user_id') %}
-                <a class="nav-link" href="{{ url_for('index') }}">ホーム</a>
-                <a class="nav-link" href="{{ url_for('insert') }}">入力</a>
-                <a class="nav-link text-danger" href="{{ url_for('logout') }}">ログアウト</a>
+                <div class="navbar-nav flex-row me-3">
+                    <a class="nav-link px-2 fw-bold" href="{{ url_for('index') }}">ホーム</a>
+                    <a class="nav-link px-2 fw-bold" href="{{ url_for('insert') }}">入力</a>
+                </div>
                 {% endif %}
+
+                <button class="btn btn-outline-light border-0 me-2 fs-5" onclick="toggleThemePalette()" title="テーマを変更">
+                    🎨
+                </button>
+
+                {% if session.get('user_id') %}
+                    <a class="nav-link text-danger fw-bold" href="{{ url_for('logout') }}">ログアウト</a>
+                {% endif %}
+
+                <div id="themePalette" class="theme-palette-container">
+                    <div class="theme-dot dot-pink" onclick="changeTheme('')" title="ピンク"></div>
+                    <div class="theme-dot dot-blue" onclick="changeTheme('theme-blue')" title="ブルー"></div>
+                    <div class="theme-dot dot-yellow" onclick="changeTheme('theme-yellow')" title="イエロー"></div>
+                    <div class="theme-dot dot-purple" onclick="changeTheme('theme-purple')" title="パープル"></div>
+                    <div class="theme-dot dot-green" onclick="changeTheme('theme-green')" title="グリーン"></div>
+                </div>
             </div>
         </div>
     </nav>
 
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show shadow-sm mb-4" role="alert" style="border-radius: 15px;">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

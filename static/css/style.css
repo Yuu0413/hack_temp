@@ -6,71 +6,26 @@
 /* =========================================
    2. 色の定義 (テーマカラー変数)
    ========================================= */
-
-/* --- パステルカラーの共通定義 --- */
 :root {
-    /* デフォルトテーマ (ピンク) */
-    --primary-color: #ff85a2;       /* メインカラー (ボタン、強調) */
-    --primary-hover: #ff5c77;       /* ホバー時の色 (濃いめ) */
-    --accent-color: #70d6ff;        /* アクセント (選択中など、ここではスカイブルー) */
-    --bg-color: #fff0f5;            /* 背景色 (極薄ピンク) */
-    --card-bg: #ffffff;             /* カードの背景 */
-    --text-color: #594a4e;          /* 文字色 (柔らかい茶色寄り) */
+    --primary-color: #ff85a2;
+    --primary-hover: #ff5c77;
+    --accent-color: #70d6ff;
+    --bg-color: #fff0f5;
+    --card-bg: #ffffff;
+    --text-color: #594a4e;
     --border-radius: 20px;
     --main-font: "Zen Maru Gothic", sans-serif;
 }
 
-/* --- テーマ: ブルー (Cool Pastel) --- */
-body.theme-blue {
-    --primary-color: #70d6ff;       /* スカイブルー */
-    --primary-hover: #40c6e8;
-    --accent-color: #ff85a2;        /* アクセントにピンクを使用 */
-    --bg-color: #e6f7ff;            /* 薄い水色 */
-    --text-color: #405060;
-}
-
-/* --- テーマ: イエロー (Pop Pastel) --- */
-body.theme-yellow {
-    --primary-color: #ffde70;       /* ソフトイエロー */
-    --primary-hover: #ffc107;
-    --accent-color: #ff85a2;        /* アクセントにピンクを使用 */
-    --bg-color: #fffbe5;            /* 薄いクリーム色 */
-    --text-color: #5d5038;
-}
-
-/* --- テーマ: パープル (Lavender Pastel) --- */
-body.theme-purple {
-    --primary-color: #c2b1e8;       /* ラベンダー */
-    --primary-hover: #a591d1;
-    --accent-color: #ff85a2;        /* アクセントにピンクを使用 */
-    --bg-color: #f5f0ff;            /* 薄い紫 */
-    --text-color: #4a3b50;
-}
-
-/* --- テーマ: グリーン (Mint Pastel) --- */
-body.theme-green {
-    --primary-color: #9ae8a8;       /* ミントグリーン */
-    --primary-hover: #79d187;
-    --accent-color: #ff85a2;        /* アクセントにピンクを使用 */
-    --bg-color: #e5fff5;            /* 薄いミント色 */
-    --text-color: #354a3e;
-}
-
+body.theme-blue { --primary-color: #70d6ff; --primary-hover: #40c6e8; --accent-color: #ff85a2; --bg-color: #e6f7ff; --text-color: #405060; }
+body.theme-yellow { --primary-color: #ffde70; --primary-hover: #ffc107; --accent-color: #ff85a2; --bg-color: #fffbe5; --text-color: #5d5038; }
+body.theme-purple { --primary-color: #c2b1e8; --primary-hover: #a591d1; --accent-color: #ff85a2; --bg-color: #f5f0ff; --text-color: #4a3b50; }
+body.theme-green { --primary-color: #9ae8a8; --primary-hover: #79d187; --accent-color: #ff85a2; --bg-color: #e5fff5; --text-color: #354a3e; }
 
 /* =========================================
-   3. 強制フォント適用設定
+   3. 基本設定
    ========================================= */
-/* あらゆる要素に対して Zen丸ゴシックを強制適用 */
-* {
-    font-family: var(--main-font) !important;
-}
-
-body, 
-h1, h2, h3, h4, h5, h6, 
-p, a, span, div, li,
-input, button, select, textarea, .form-control, .btn {
-    font-family: var(--main-font) !important;
-}
+* { font-family: var(--main-font) !important; }
 
 body {
     background-color: var(--bg-color);
@@ -78,75 +33,69 @@ body {
     margin: 0;
     padding-bottom: 50px;
     line-height: 1.6;
+    transition: background-color 0.3s ease;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 900;
-    letter-spacing: 0.05em;
-    margin-bottom: 20px;
-}
+h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: 0.05em; margin-bottom: 20px; text-align: center; }
 
-/* --- 入力欄の個別設定 (datainsert.html用) --- */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-input[type="password"],
-input[type="email"],
-.form-control { /* form-controlクラスにも適用 */
-    font-family: var(--main-font) !important;
-    background-color: #fff;
-    border: 2px solid #eee;
-    border-radius: 12px;
-    padding: 10px;
-    transition: border-color 0.2s;
-}
-.form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb, 255, 133, 162), 0.25); /* プライマリーカラーに合わせてシャドウをつける（要ブラウザ対応） */
-}
+.alert { border: none; font-weight: bold; color: var(--text-color); background-color: var(--card-bg); }
+.alert-success { border-left: 8px solid var(--accent-color); }
+.alert-danger { border-left: 8px solid #ff5c77; }
 
+/* ナビゲーションリンクの色の調整 */
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+.navbar-nav .nav-link:hover {
+    color: white !important;
+}
 
 /* =========================================
-   4. パーツのデザイン
+   4. パレットのデザイン
    ========================================= */
-/* 白いカード枠 */
+.theme-palette-container {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    display: flex;
+    gap: 12px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 2px solid var(--primary-color);
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.9);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.theme-palette-container.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+.theme-dot { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+.theme-dot:hover { transform: scale(1.2); }
+.theme-dot.active { border-color: var(--text-color); }
+.dot-pink { background-color: #ff85a2; }
+.dot-blue { background-color: #70d6ff; }
+.dot-yellow { background-color: #ffde70; }
+.dot-purple { background-color: #c2b1e8; }
+.dot-green { background-color: #9ae8a8; }
+
+/* =========================================
+   5. パーツのデザイン
+   ========================================= */
 .card-custom {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
-    padding: 25px;
-    margin-bottom: 25px;
-    border: none;
+    background-color: var(--card-bg); border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: none;
 }
+.total-price { font-weight: 900; color: var(--primary-color); }
 
-/* 強調される金額 */
-.total-price {
-    font-weight: 900;
-    color: var(--primary-color);
-}
-
-/* 選択ボタン (朝・昼・晩など) */
-.selectable-group {
-    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
-}
 .selectable-btn {
     flex: 1; padding: 12px; border-radius: 50px; border: 2px solid #eee;
-    background: #fff; cursor: pointer; transition: all 0.2s; font-weight: bold; color: #888;
+    background: #fff; cursor: pointer; transition: 0.2s; font-weight: bold; color: #888;
 }
-.selectable-btn:hover {
-    background: #fafafa;
-    transform: translateY(-1px);
-}
+.selectable-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
-/* 選択ボタン - アクティブ時 */
-.selectable-btn.active {
-    background: var(--accent-color); 
-    color: #fff; 
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* 登録ボタン */
 .submit-btn {
     width: 100%; padding: 15px; background-color: var(--primary-color);
     color: white; border: none; border-radius: var(--border-radius);
@@ -154,7 +103,6 @@ input[type="email"],
 }
 .submit-btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
 
-/* 痛バのグリッド */
 .itabag-container {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
     gap: 10px; padding: 20px; background: rgba(255,255,255,0.6);
@@ -165,25 +113,7 @@ input[type="email"],
     display: flex; align-items: center; justify-content: center;
     font-size: 14px; color: #aaa; font-weight: bold; transition: 0.3s;
 }
-
-/* 痛バのバッジ - アクティブ時 */
 .badge-item.active {
-    background-color: var(--primary-color); 
-    color: white; border: 2px solid white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
-    transform: scale(1.1);
-}
-
-/* オタクボタン */
-.btn-otaku {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    font-weight: bold;
-    border-radius: 50px;
-    padding: 10px 25px;
-}
-.btn-otaku:hover {
-    background-color: var(--primary-hover);
-    color: white;
+    background: var(--primary-color); color: white; border: 2px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform: scale(1.1);
 }
