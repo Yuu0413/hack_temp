@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>データ入力</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    .field { margin-bottom: 16px; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    button.selectable {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    button.selectable.active {
+      background: #33DD99;
+      color: #fff;
+      border-color: #33DD99;
+    }
+    input[type="date"], input[type="number"] {
+      padding: 6px;
+      font-size: 14px;
+    }
+    #result table {
+      border-collapse: collapse;
+      min-width: 260px;
+    }
+    #result th, #result td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    #result th {
+      background: #f0f0f0;
+      width: 120px;
+    }
+  </style>
+</head>
+<body>
+  <h1>購入データ入力</h1>
+
+  <!-- 日付 -->
+  <div class="field">
+    <label>日付（yyyy/mm/dd）：</label><br>
+    <input type="date" id="date-input">
+  </div>
+
+  <!-- 時間帯 -->
+  <div class="field">
+    <label>購入時間帯：</label>
+    <div class="btn-group" id="time-group">
+      <button type="button" class="selectable" data-value="朝">朝</button>
+      <button type="button" class="selectable" data-value="昼">昼</button>
+      <button type="button" class="selectable" data-value="晩">晩</button>
+    </div>
+  </div>
+
+  <!-- カテゴリ -->
+  <div class="field">
+    <label>購入カテゴリー：</label>
+    <div class="btn-group" id="category-group">
+      <button type="button" class="selectable" data-value="飲み物">飲み物</button>
+      <button type="button" class="selectable" data-value="お菓子">お菓子</button>
+      <button type="button" class="selectable" data-value="メインディッシュ">メインディッシュ</button>
+      <button type="button" class="selectable" data-value="イレギュラー">イレギュラー</button>
+    </div>
+  </div>
+
+  <!-- 金額 -->
+  <div class="field">
+    <label>金額（円）：</label><br>
+    <input type="number" id="amount-input" min="0" step="1" placeholder="0">
+  </div>
+
+  <!-- 確認用 -->
+  <button id="submit-btn" type="button">内容を確認</button>
+
+  <div id="result" style="margin-top:16px;"></div>
+
+  <script>
+    // 日付の初期値を「今日」に設定
+    (function setToday() {
+      const input = document.getElementById('date-input');
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = ('0' + (today.getMonth() + 1)).slice(-2);
+      const dd = ('0' + today.getDate()).slice(-2);
+      input.value = `${yyyy}-${mm}-${dd}`;
+    })();
+
+    // 単一選択トグル
+    function setupSingleSelect(groupId) {
+      const group = document.getElementById(groupId);
+      group.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('selectable')) return;
+        [...group.querySelectorAll('.selectable')]
+          .forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+      });
+    }
+    setupSingleSelect('time-group');
+    setupSingleSelect('category-group');
+
+    // 確認ボタン押下時（表形式で表示）
+    document.getElementById('submit-btn').addEventListener('click', () => {
+      const dateValue = document.getElementById('date-input').value;
+      const timeActive = document.querySelector('#time-group .active');
+      const catActive = document.querySelector('#category-group .active');
+      const amount = document.getElementById('amount-input').value;
+
+      const time = timeActive ? timeActive.dataset.value : '';
+      const category = catActive ? catActive.dataset.value : '';
+      const displayDate = dateValue ? dateValue.replace(/-/g, '/') : '';
+
+      const tableHtml = `
+        <table>
+          <tr><th>日付</th><td>${displayDate}</td></tr>
+          <tr><th>購入時間帯</th><td>${time}</td></tr>
+          <tr><th>購入カテゴリー</th><td>${category}</td></tr>
+          <tr><th>金額（円）</th><td>${amount}</td></tr>
+        </table>
+      `;
+      document.getElementById('result').innerHTML = tableHtml;
+    });
+  </script>
+</body>
+</html>
