@@ -20,7 +20,7 @@ CREATE TABLE badge_settings (
     setting_id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     badge_price INTEGER DEFAULT 600,
-    itabag_badge_count INTEGER DEFAULT 35,
+    badges_per_bag INTEGER DEFAULT 35, -- 修正: server.pyに合わせてカラム名を変更
     itabag_total_price INTEGER DEFAULT 19250,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
@@ -109,7 +109,6 @@ CREATE TABLE monthly_summaries (
 
 -- -----------------------------------------------------
 -- トリガー (updated_at の自動更新用)
--- SQLiteはデフォルトで更新時のタイムスタンプ変更を行わないため作成
 -- -----------------------------------------------------
 
 -- purchasesの更新時

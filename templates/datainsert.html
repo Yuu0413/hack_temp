@@ -4,126 +4,158 @@
   <meta charset="UTF-8">
   <title>データ入力</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 16px; }
-    .field { margin-bottom: 16px; }
+    body { font-family: system-ui, sans-serif; padding: 16px; text-align: center; background-color: #f9f9f9; }
+    h1 { color: #333; }
+    .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .field { margin-bottom: 20px; text-align: left; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; }
+    
     .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     button.selectable {
-      padding: 6px 12px;
+      flex: 1;
+      padding: 10px;
       border-radius: 4px;
       border: 1px solid #ccc;
       background: #f5f5f5;
       cursor: pointer;
+      transition: background 0.3s;
     }
+    button.selectable:hover { background: #e0e0e0; }
     button.selectable.active {
       background: #33DD99;
       color: #fff;
       border-color: #33DD99;
     }
+    
     input[type="date"], input[type="number"] {
-      padding: 6px;
-      font-size: 14px;
-    }
-    #result table {
-      border-collapse: collapse;
-      min-width: 260px;
-    }
-    #result th, #result td {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
       border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: left;
+      border-radius: 4px;
     }
-    #result th {
-      background: #f0f0f0;
-      width: 120px;
+    
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
     }
+    .submit-btn:hover { background-color: #ff1493; }
+
+    /* Flash Message Styles */
+    .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; text-align: left; }
+    .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+    a { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
+
+<div class="container">
   <h1>購入データ入力</h1>
 
-  <!-- 日付 -->
-  <div class="field">
-    <label>日付（yyyy/mm/dd）：</label><br>
-    <input type="date" id="date-input">
-  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-  <!-- 時間帯 -->
-  <div class="field">
-    <label>購入時間帯：</label>
-    <div class="btn-group" id="time-group">
-      <button type="button" class="selectable" data-value="朝">朝</button>
-      <button type="button" class="selectable" data-value="昼">昼</button>
-      <button type="button" class="selectable" data-value="晩">晩</button>
+  <form action="{{ url_for('insert') }}" method="POST" id="insert-form">
+
+    <div class="field">
+      <label>日付（yyyy/mm/dd）：</label>
+      <input type="date" id="date-input" name="date" required>
     </div>
-  </div>
 
-  <!-- カテゴリ -->
-  <div class="field">
-    <label>購入カテゴリー：</label>
-    <div class="btn-group" id="category-group">
-      <button type="button" class="selectable" data-value="ドリンク">ドリンク</button>
-      <button type="button" class="selectable" data-value="スナック">スナック</button>
-      <button type="button" class="selectable" data-value="フード">フード</button>
-      <button type="button" class="selectable" data-value="その他">その他</button>
+    <div class="field">
+      <label>購入時間帯：</label>
+      <div class="btn-group" id="time-group">
+        <button type="button" class="selectable" data-value="朝">朝</button>
+        <button type="button" class="selectable" data-value="昼">昼</button>
+        <button type="button" class="selectable" data-value="晩">晩</button>
+      </div>
+      <input type="hidden" name="time_period" id="hidden-time" required>
     </div>
-  </div>
 
-  <!-- 金額 -->
-  <div class="field">
-    <label>金額（円）：</label><br>
-    <input type="number" id="amount-input" min="0" step="1" placeholder="0">
-  </div>
+    <div class="field">
+      <label>購入カテゴリー：</label>
+      <div class="btn-group" id="category-group">
+        <button type="button" class="selectable" data-value="ドリンク">ドリンク</button>
+        <button type="button" class="selectable" data-value="スナック">スナック</button>
+        <button type="button" class="selectable" data-value="フード">フード</button>
+        <button type="button" class="selectable" data-value="その他">その他</button>
+      </div>
+      <input type="hidden" name="category" id="hidden-category" required>
+    </div>
 
-  <!-- 確認用 -->
-  <button id="submit-btn" type="button">内容を確認</button>
+    <div class="field">
+      <label>金額（円）：</label>
+      <input type="number" name="amount" id="amount-input" min="0" step="1" placeholder="0" required>
+    </div>
 
-  <div id="result" style="margin-top:16px;"></div>
+    <button type="submit" class="submit-btn">データを登録</button>
 
-  <script>
-    // 日付の初期値を「今日」に設定
-    (function setToday() {
-      const input = document.getElementById('date-input');
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = ('0' + (today.getMonth() + 1)).slice(-2);
-      const dd = ('0' + today.getDate()).slice(-2);
-      input.value = `${yyyy}-${mm}-${dd}`;
-    })();
+  </form>
 
-    // 単一選択トグル
-    function setupSingleSelect(groupId) {
-      const group = document.getElementById(groupId);
-      group.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('selectable')) return;
-        [...group.querySelectorAll('.selectable')]
-          .forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
-      });
-    }
-    setupSingleSelect('time-group');
-    setupSingleSelect('category-group');
+  <a href="{{ url_for('index') }}">ホームに戻る</a>
+</div>
 
-    // 確認ボタン押下時（表形式で表示）
-    document.getElementById('submit-btn').addEventListener('click', () => {
-      const dateValue = document.getElementById('date-input').value;
-      const timeActive = document.querySelector('#time-group .active');
-      const catActive = document.querySelector('#category-group .active');
-      const amount = document.getElementById('amount-input').value;
+<script>
+  // 日付の初期値を「今日」に設定
+  (function setToday() {
+    const input = document.getElementById('date-input');
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = ('0' + (today.getMonth() + 1)).slice(-2);
+    const dd = ('0' + today.getDate()).slice(-2);
+    input.value = `${yyyy}-${mm}-${dd}`;
+  })();
 
-      const time = timeActive ? timeActive.dataset.value : '';
-      const category = catActive ? catActive.dataset.value : '';
-      const displayDate = dateValue ? dateValue.replace(/-/g, '/') : '';
+  // 選択ロジック（ボタンクリック -> 隠しinputへの値セット）
+  function setupSingleSelect(groupId, hiddenInputId) {
+    const group = document.getElementById(groupId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    
+    group.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('selectable')) return;
+      
+      // 見た目の切り替え
+      [...group.querySelectorAll('.selectable')]
+        .forEach(btn => btn.classList.remove('active'));
+      e.target.classList.add('active');
 
-      const tableHtml = `
-        <table>
-          <tr><th>日付</th><td>${displayDate}</td></tr>
-          <tr><th>購入時間帯</th><td>${time}</td></tr>
-          <tr><th>購入カテゴリー</th><td>${category}</td></tr>
-          <tr><th>金額（円）</th><td>${amount}</td></tr>
-        </table>
-      `;
-      document.getElementById('result').innerHTML = tableHtml;
+      // 値を隠しフィールドにセット (これでサーバーに送信されます)
+      hiddenInput.value = e.target.dataset.value;
     });
-  </script>
+  }
+
+  // 時間帯とカテゴリの設定
+  setupSingleSelect('time-group', 'hidden-time');
+  setupSingleSelect('category-group', 'hidden-category');
+
+  // フォーム送信前のバリデーション（念の為）
+  document.getElementById('insert-form').addEventListener('submit', function(e) {
+    const time = document.getElementById('hidden-time').value;
+    const category = document.getElementById('hidden-category').value;
+    
+    if (!time || !category) {
+      e.preventDefault(); // 送信キャンセル
+      alert('時間帯とカテゴリーを選択してください。');
+    }
+  });
+</script>
+
 </body>
 </html>

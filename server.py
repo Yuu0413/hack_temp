@@ -7,17 +7,10 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# 既存のDBモジュール (構成に合わせて適宜調整してください)
-from db import user as User
-from db import badge_setting as Setting
-from db import summary as Summary
-from db import purchase as Purchase
-# from db import init_db # 今回はserver.py内で初期化を行うためコメントアウト
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 DATABASE = 'oshikatsu.db'
-SCHEMA_PATH = os.path.join('db', 'schema.sql') # schema.sqlのパス
+SCHEMA_PATH = os.path.join('db', 'schema.sql')
 
 # --- データベース接続ヘルパー ---
 def get_db_connection():
@@ -25,9 +18,10 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- データベース初期化関数 (エラー解決用) ---
+# --- データベース初期化関数 ---
 def init_db_if_needed():
     """テーブルが存在しない場合、schema.sqlを実行して初期化する"""
+    create_needed = False
     if not os.path.exists(DATABASE):
         create_needed = True
     else:
@@ -50,6 +44,94 @@ def init_db_if_needed():
         else:
             print(f"Error: {SCHEMA_PATH} not found. Cannot initialize database.")
 
+# --- 集計更新ヘルパー関数 (新規追加) ---
+def update_summaries(user_id, date_str):
+    """
+    指定された日付に関連する日次、週次、月次の集計を再計算して更新する
+    date_str: 'YYYY-MM-DD' 形式
+    """
+    conn = get_db_connection()
+    
+    # 日付オブジェクト変換
+    try:
+        target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        conn.close()
+        return
+
+    # --- 1. 日次集計 (Daily) ---
+    purchases = conn.execute("""
+        SELECT drink_amount, snack_amount, main_dish_amount, irregular_amount
+        FROM purchases
+        WHERE user_id = ? AND purchase_date = ?
+    """, (user_id, date_str)).fetchall()
+    
+    drink_total = sum(p['drink_amount'] for p in purchases)
+    snack_total = sum(p['snack_amount'] for p in purchases)
+    main_total = sum(p['main_dish_amount'] for p in purchases)
+    irr_total = sum(p['irregular_amount'] for p in purchases)
+    daily_total = drink_total + snack_total + main_total + irr_total
+    
+    # REPLACE INTO で更新 (UNIQUE制約を利用して上書き)
+    conn.execute("""
+        INSERT OR REPLACE INTO daily_summaries 
+        (user_id, summary_date, drink_total, snack_total, main_dish_total, irregular_total, daily_total, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    """, (user_id, date_str, drink_total, snack_total, main_total, irr_total, daily_total))
+
+    # --- 2. 月次集計 (Monthly) ---
+    year = target_date.year
+    month = target_date.month
+    
+    # SQLiteの日付関数で月ごとの集計
+    monthly_rows = conn.execute("""
+        SELECT drink_amount, snack_amount, main_dish_amount, irregular_amount
+        FROM purchases
+        WHERE user_id = ? AND CAST(strftime('%Y', purchase_date) AS INTEGER) = ? 
+        AND CAST(strftime('%m', purchase_date) AS INTEGER) = ?
+    """, (user_id, year, month)).fetchall()
+    
+    m_drink = sum(p['drink_amount'] for p in monthly_rows)
+    m_snack = sum(p['snack_amount'] for p in monthly_rows)
+    m_main = sum(p['main_dish_amount'] for p in monthly_rows)
+    m_irr = sum(p['irregular_amount'] for p in monthly_rows)
+    m_total = m_drink + m_snack + m_main + m_irr
+    
+    conn.execute("""
+        INSERT OR REPLACE INTO monthly_summaries 
+        (user_id, year, month, drink_total, snack_total, main_dish_total, irregular_total, monthly_total, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    """, (user_id, year, month, m_drink, m_snack, m_main, m_irr, m_total))
+
+    # --- 3. 週次集計 (Weekly) ---
+    # 週の開始日(日曜)を計算
+    idx = (target_date.weekday() + 1) % 7
+    sunday = target_date - datetime.timedelta(days=idx)
+    sunday_str = sunday.strftime('%Y-%m-%d')
+    saturday = sunday + datetime.timedelta(days=6)
+    saturday_str = saturday.strftime('%Y-%m-%d')
+    
+    weekly_rows = conn.execute("""
+        SELECT drink_amount, snack_amount, main_dish_amount, irregular_amount
+        FROM purchases
+        WHERE user_id = ? AND purchase_date >= ? AND purchase_date <= ?
+    """, (user_id, sunday_str, saturday_str)).fetchall()
+    
+    w_drink = sum(p['drink_amount'] for p in weekly_rows)
+    w_snack = sum(p['snack_amount'] for p in weekly_rows)
+    w_main = sum(p['main_dish_amount'] for p in weekly_rows)
+    w_irr = sum(p['irregular_amount'] for p in weekly_rows)
+    w_total = w_drink + w_snack + w_main + w_irr
+    
+    conn.execute("""
+        INSERT OR REPLACE INTO weekly_summaries 
+        (user_id, start_date, end_date, drink_total, snack_total, main_dish_total, irregular_total, weekly_total, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    """, (user_id, sunday_str, saturday_str, w_drink, w_snack, w_main, w_irr, w_total))
+
+    conn.commit()
+    conn.close()
+
 # --- フォームクラス ---
 class SignupForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -61,7 +143,6 @@ class SignupForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, field):
-        # Userモジュールがない場合の安全策として直接チェックも実装
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM users WHERE username = ?', (field.data,)).fetchone()
         conn.close()
@@ -77,7 +158,6 @@ class LoginForm(FlaskForm):
 
 @app.route('/')
 def index():
-    # ログインしていない場合はログイン画面へ
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
@@ -88,15 +168,13 @@ def index():
     today = datetime.date.today()
     today_str = today.strftime('%Y-%m-%d')
 
-    # 1. 本日のデータ取得
+    # 本日のデータ
     daily = conn.execute(
         "SELECT * FROM daily_summaries WHERE user_id = ? AND summary_date = ?",
         (user_id, today_str)
     ).fetchone()
 
-    # 2. 今週のデータ取得 (日曜始まりと仮定)
-    # 今日の曜日を取得 (月=0, ... 日=6)
-    # 直前の日曜日を計算
+    # 今週のデータ
     idx = (today.weekday() + 1) % 7 
     sunday = today - datetime.timedelta(days=idx)
     sunday_str = sunday.strftime('%Y-%m-%d')
@@ -106,7 +184,7 @@ def index():
         (user_id, sunday_str)
     ).fetchone()
 
-    # 3. 今月のデータ取得
+    # 今月のデータ
     monthly = conn.execute(
         "SELECT * FROM monthly_summaries WHERE user_id = ? AND year = ? AND month = ?",
         (user_id, today.year, today.month)
@@ -114,7 +192,6 @@ def index():
     
     conn.close()
 
-    # テンプレートに渡すデータを作成（データがない場合は0を入れる）
     data = {
         'daily_total': daily['daily_total'] if daily else 0,
         'drink': daily['drink_total'] if daily else 0,
@@ -173,22 +250,98 @@ def insert():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # 既存のinsert処理（省略せず必要な場合は前回のコードを参照して統合してください）
-    # ここではルーティングのみ示します
     if request.method == 'POST':
-        # ... (前回のコードのDB保存処理) ...
-        # 今回のエラー解決が主眼のため、詳細は省略しますが
-        # Purchase.add_purchase 等を呼び出す処理が入ります
-        pass 
+        user_id = session['user_id']
+        
+        # フォームからのデータ取得
+        # datainsert.html の input name 属性が date, time_period, category, amount であると想定
+        date_val = request.form.get('date') # 2025-12-12 or 2025/12/12
+        time_period = request.form.get('time_period') # 朝, 昼, 晩
+        category = request.form.get('category') # ドリンク, スナック, フード, その他
+        amount_str = request.form.get('amount')
+        
+        if date_val and amount_str and category:
+            # 日付の正規化 (DBは YYYY-MM-DD)
+            date_val = date_val.replace('/', '-')
+            
+            try:
+                amount = int(amount_str)
+            except ValueError:
+                flash('金額は数値で入力してください', 'danger')
+                return redirect(url_for('insert'))
+
+            # カテゴリ振り分け
+            drink = amount if category == 'ドリンク' else 0
+            snack = amount if category == 'スナック' else 0
+            main = amount if category == 'フード' else 0
+            irr = amount if category == 'その他' else 0
+            
+            conn = get_db_connection()
+            conn.execute("""
+                INSERT INTO purchases (user_id, purchase_date, time_period, drink_amount, snack_amount, main_dish_amount, irregular_amount)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, date_val, time_period, drink, snack, main, irr))
+            conn.commit()
+            conn.close()
+            
+            # 【重要】集計データの更新
+            update_summaries(user_id, date_val)
+            
+            flash('購入データを記録しました！', 'success')
+        else:
+            flash('すべての項目を入力してください', 'warning')
+            
+        return redirect(url_for('insert'))
 
     return render_template('datainsert.html')
 
 @app.route('/otaku')
 def otaku():
-    # 痛バ画面（HTMLにあったリンク先）
-    return render_template('otaku.html')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    today = datetime.date.today()
+    
+    # 月次データの取得
+    monthly = conn.execute(
+        "SELECT monthly_total FROM monthly_summaries WHERE user_id = ? AND year = ? AND month = ?",
+        (user_id, today.year, today.month)
+    ).fetchone()
+    monthly_total = monthly['monthly_total'] if monthly else 0
+    
+    # バッジ設定の取得
+    settings = conn.execute(
+        "SELECT badge_price, badges_per_bag FROM badge_settings WHERE user_id = ?",
+        (user_id,)
+    ).fetchone()
+    
+    if settings:
+        badge_price = settings['badge_price']
+        itabag_count = settings['badges_per_bag']
+    else:
+        badge_price = 440
+        itabag_count = 40
+        
+    conn.close()
+    
+    # 獲得バッジ数の計算
+    if badge_price > 0:
+        earned_badges = int(monthly_total // badge_price)
+    else:
+        earned_badges = 0
+    
+    data = {
+        'monthly_total': monthly_total,
+        'badge_price': badge_price,
+        'earned_badges': earned_badges,
+        'itabag_count': itabag_count
+    }
+    
+    return render_template('otaku.html', data=data)
 
 if __name__ == '__main__':
-    # 起動時にDBチェックを実行
     init_db_if_needed()
-    app.run(debug=True, port=8092)
+    app.run(debug=True, port=8100)
