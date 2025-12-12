@@ -1,22 +1,56 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, session, render_template_string
+import sqlite3
+import datetime
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-import datetime
 
-# 既存のDBモジュールをインポート
+# 既存のDBモジュール (構成に合わせて適宜調整してください)
 from db import user as User
 from db import badge_setting as Setting
 from db import summary as Summary
 from db import purchase as Purchase
-from db import init_db
+# from db import init_db # 今回はserver.py内で初期化を行うためコメントアウト
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'  # セキュリティのため変更推奨
+app.config['SECRET_KEY'] = 'your-secret-key-change-this'
+DATABASE = 'oshikatsu.db'
+SCHEMA_PATH = os.path.join('db', 'schema.sql') # schema.sqlのパス
 
-# --- フォームクラス定義 (Templatesの要求に対応) ---
+# --- データベース接続ヘルパー ---
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# --- データベース初期化関数 (エラー解決用) ---
+def init_db_if_needed():
+    """テーブルが存在しない場合、schema.sqlを実行して初期化する"""
+    if not os.path.exists(DATABASE):
+        create_needed = True
+    else:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # usersテーブルがあるか確認
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
+        result = cursor.fetchone()
+        conn.close()
+        create_needed = (result is None)
+
+    if create_needed:
+        print("Initializing database...")
+        if os.path.exists(SCHEMA_PATH):
+            conn = get_db_connection()
+            with open(SCHEMA_PATH, mode='r', encoding='utf-8') as f:
+                conn.executescript(f.read())
+            conn.close()
+            print("Database initialized.")
+        else:
+            print(f"Error: {SCHEMA_PATH} not found. Cannot initialize database.")
+
+# --- フォームクラス ---
 class SignupForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -27,7 +61,11 @@ class SignupForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, field):
-        if User.get_user_by_username(field.data):
+        # Userモジュールがない場合の安全策として直接チェックも実装
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE username = ?', (field.data,)).fetchone()
+        conn.close()
+        if user:
             raise ValidationError('This username is already taken.')
 
 class LoginForm(FlaskForm):
@@ -35,136 +73,122 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
-# --- ダッシュボード用テンプレート (index.htmlなしで動作させるため) ---
-DASHBOARD_TEMPLATE = """
-{% extends "base.html" %}
-
-{% block title %}Dashboard | Oshikatsu Savings{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2 class="mb-4">ようこそ、{{ username }} さん</h2>
-        
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                本日の推し活・節約状況 ({{ today }})
-            </div>
-            <div class="card-body">
-                {% if summary %}
-                    <div class="row text-center">
-                        <div class="col-md-4">
-                            <h4>支出合計</h4>
-                            <p class="display-6 text-danger">{{ summary['daily_total'] }}円</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h4>我慢できた缶バッジ</h4>
-                            <p class="display-6 text-success">{{ "%.2f"|format(summary['badge_equivalent']) }}個</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h4>痛バ完成度</h4>
-                            <p class="display-6 text-info">{{ "%.4f"|format(summary['itabag_equivalent']) }}個分</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <p>内訳: 飲 {{ summary['drink_total'] }}円 / 菓 {{ summary['snack_total'] }}円 / 飯 {{ summary['main_dish_total'] }}円</p>
-                {% else %}
-                    <p class="text-muted">本日のデータはまだありません。</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="d-grid gap-2 d-md-block">
-            <a href="{{ url_for('insert') }}" class="btn btn-success btn-lg">購入データを入力する</a>
-            <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">設定変更</a>
-        </div>
-    </div>
-</div>
-{% endblock %}
-"""
-
-# --- ルーティング ---
+# --- ルート定義 ---
 
 @app.route('/')
 def index():
+    # ログインしていない場合はログイン画面へ
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     user_id = session['user_id']
-    user = User.get_user_by_id(user_id)
-    if not user:
-        session.clear()
-        return redirect(url_for('login'))
+    username = session.get('username', 'User')
+    
+    conn = get_db_connection()
+    today = datetime.date.today()
+    today_str = today.strftime('%Y-%m-%d')
 
-    # 本日のサマリー取得
-    today_str = datetime.date.today().strftime('%Y-%m-%d')
-    summary = Summary.get_daily_summary(user_id, today_str)
+    # 1. 本日のデータ取得
+    daily = conn.execute(
+        "SELECT * FROM daily_summaries WHERE user_id = ? AND summary_date = ?",
+        (user_id, today_str)
+    ).fetchone()
 
-    # index.html ファイルを使わず、文字列からレンダリング
-    return render_template_string(
-        DASHBOARD_TEMPLATE, 
-        username=user['username'], 
-        today=today_str,
-        summary=summary
-    )
+    # 2. 今週のデータ取得 (日曜始まりと仮定)
+    # 今日の曜日を取得 (月=0, ... 日=6)
+    # 直前の日曜日を計算
+    idx = (today.weekday() + 1) % 7 
+    sunday = today - datetime.timedelta(days=idx)
+    sunday_str = sunday.strftime('%Y-%m-%d')
+    
+    weekly = conn.execute(
+        "SELECT * FROM weekly_summaries WHERE user_id = ? AND start_date = ?",
+        (user_id, sunday_str)
+    ).fetchone()
+
+    # 3. 今月のデータ取得
+    monthly = conn.execute(
+        "SELECT * FROM monthly_summaries WHERE user_id = ? AND year = ? AND month = ?",
+        (user_id, today.year, today.month)
+    ).fetchone()
+    
+    conn.close()
+
+    # テンプレートに渡すデータを作成（データがない場合は0を入れる）
+    data = {
+        'daily_total': daily['daily_total'] if daily else 0,
+        'drink': daily['drink_total'] if daily else 0,
+        'snack': daily['snack_total'] if daily else 0,
+        'main': daily['main_dish_total'] if daily else 0,
+        
+        'weekly_total': weekly['weekly_total'] if weekly else 0,
+        'monthly_total': monthly['monthly_total'] if monthly else 0
+    }
+
+    return render_template('index.html', username=username, data=data)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = SignupForm()
     if form.validate_on_submit():
-        # パスワードをハッシュ化して保存
-        hashed_pw = generate_password_hash(form.password.data)
-        user_id = User.create_user(form.username.data, hashed_pw)
-        
-        if user_id:
-            # デフォルト設定を作成
-            Setting.create_default_settings(user_id)
-            flash('Account created successfully. Please login.', 'success')
+        hashed_password = generate_password_hash(form.password.data)
+        try:
+            conn = get_db_connection()
+            conn.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                         (form.username.data, hashed_password))
+            conn.commit()
+            conn.close()
+            flash('Account created successfully! Please log in.', 'success')
             return redirect(url_for('login'))
-        else:
-            flash('Error creating account.', 'danger')
-            
+        except Exception as e:
+            flash(f'Error creating account: {e}', 'danger')
     return render_template('signup.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.get_user_by_username(form.username.data)
-        # ハッシュ化されたパスワードを照合
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE username = ?', (form.username.data,)).fetchone()
+        conn.close()
+        
         if user and check_password_hash(user['password_hash'], form.password.data):
             session['user_id'] = user['user_id']
-            flash('Login successful!', 'success')
+            session['username'] = user['username']
+            flash('Logged in successfully!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password.', 'danger')
-            
+            flash('Login Unsuccessful. Please check username and password', 'danger')
     return render_template('login.html', form=form)
 
-@app.route('/logout', methods=['GET', 'POST'])
+@app.route('/logout')
 def logout():
-    # logout.htmlもフォームを使っているので対応（POSTの場合）
-    # シンプルにGETでログアウトさせる場合も考慮
     session.pop('user_id', None)
+    session.pop('username', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
-# 仮のルート（リンク切れ防止）
-@app.route('/settings')
-def settings():
-    return "設定ページ（未実装） <a href='/'>戻る</a>"
-
-@app.route('/report')
-def report():
-    return "レポートページ（未実装） <a href='/'>戻る</a>"
-
-@app.route('/insert')
+@app.route('/insert', methods=['GET', 'POST'])
 def insert():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # 既存のinsert処理（省略せず必要な場合は前回のコードを参照して統合してください）
+    # ここではルーティングのみ示します
+    if request.method == 'POST':
+        # ... (前回のコードのDB保存処理) ...
+        # 今回のエラー解決が主眼のため、詳細は省略しますが
+        # Purchase.add_purchase 等を呼び出す処理が入ります
+        pass 
+
     return render_template('datainsert.html')
 
+@app.route('/otaku')
+def otaku():
+    # 痛バ画面（HTMLにあったリンク先）
+    return render_template('otaku.html')
+
 if __name__ == '__main__':
-    # DB初期化（存在しない場合）
-    if not os.path.exists(os.path.join(os.path.dirname(__file__), 'db', 'app.db')):
-        init_db()
-        
-    app.run(debug=True, port=8080)
+    # 起動時にDBチェックを実行
+    init_db_if_needed()
+    app.run(debug=True, port=8092)
