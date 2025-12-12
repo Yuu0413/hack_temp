@@ -2,32 +2,36 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <h1>ようこそ、{{ username }}さん</h1>
+        <h1 class="mt-2">ようこそ、{{ username }}さん</h1>
         
         <div class="card-custom">
-            <h2 class="h5 text-muted">今月の無駄遣い合計</h2>
-            <p class="total-price display-4">{{ "{:,}".format(data.monthly_total) }}円</p>
-            <a href="{{ url_for('otaku') }}" class="btn btn-primary rounded-pill px-4">推し換算（痛バ）を見る！</a>
+            <h2 class="h6 text-muted">今月の無駄遣い合計</h2>
+            <p class="total-price display-4 my-2">{{ "{:,}".format(data.monthly_total) }}円</p>
+            <div class="mt-3">
+                <a href="{{ url_for('otaku') }}" class="btn btn-otaku">
+                    ✨ 推し換算（痛バ）を見る！ ✨
+                </a>
+            </div>
         </div>
 
         <div class="card-custom">
-            <h2 class="h5 text-muted">今週の無駄遣い</h2>
+            <h2 class="h6 text-muted">今週の無駄遣い</h2>
             <p class="total-price h3">{{ "{:,}".format(data.weekly_total) }}円</p>
         </div>
 
         <div class="card-custom">
-            <h2 class="h5">本日の支出</h2>
+            <h2 class="h6 text-muted">本日の支出</h2>
             <p class="total-price h2">{{ "{:,}".format(data.daily_total) }}円</p>
             <hr>
-            <div class="d-flex justify-content-around flex-wrap">
-                <div class="mx-2">飲み物: {{ "{:,}".format(data.drink) }}円</div>
-                <div class="mx-2">お菓子: {{ "{:,}".format(data.snack) }}円</div>
-                <div class="mx-2">メイン: {{ "{:,}".format(data.main) }}円</div>
+            <div class="d-flex justify-content-around flex-wrap text-muted small">
+                <div class="mx-2">飲み物: <strong>{{ "{:,}".format(data.drink) }}円</strong></div>
+                <div class="mx-2">お菓子: <strong>{{ "{:,}".format(data.snack) }}円</strong></div>
+                <div class="mx-2">メイン: <strong>{{ "{:,}".format(data.main) }}円</strong></div>
             </div>
         </div>
 
         <div class="mt-3">
-            <a href="{{ url_for('insert') }}" class="btn btn-outline-secondary btn-lg rounded-pill shadow-sm">✏️ 支出を入力する</a>
+            <a href="{{ url_for('insert') }}" class="btn btn-outline-secondary btn-lg rounded-pill shadow-sm px-5">✏️ 記録する</a>
         </div>
     </div>
 </div>

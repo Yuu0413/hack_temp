@@ -1,11 +1,8 @@
 /* =========================================
-   1. フォントの読み込み (Zen丸ゴシック)
+   1. フォントとテーマ定義
    ========================================= */
 @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');
 
-/* =========================================
-   2. 色の定義 (テーマカラー変数)
-   ========================================= */
 :root {
     --primary-color: #ff85a2;
     --primary-hover: #ff5c77;
@@ -23,7 +20,7 @@ body.theme-purple { --primary-color: #c2b1e8; --primary-hover: #a591d1; --accent
 body.theme-green { --primary-color: #9ae8a8; --primary-hover: #79d187; --accent-color: #ff85a2; --bg-color: #e5fff5; --text-color: #354a3e; }
 
 /* =========================================
-   3. 基本設定
+   2. 基本設定
    ========================================= */
 * { font-family: var(--main-font) !important; }
 
@@ -36,45 +33,77 @@ body {
     transition: background-color 0.3s ease;
 }
 
-h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: 0.05em; margin-bottom: 20px; text-align: center; }
+h1, h2, h3, h4, h5, h6 { font-weight: 900 !important; letter-spacing: 0.02em; text-align: center; margin-bottom: 20px; }
 
-.alert { border: none; font-weight: bold; color: var(--text-color); background-color: var(--card-bg); }
-.alert-success { border-left: 8px solid var(--accent-color); }
-.alert-danger { border-left: 8px solid #ff5c77; }
-
-/* ナビゲーションリンクの色の調整 */
-.navbar-nav .nav-link {
-    color: rgba(255, 255, 255, 0.9) !important;
+.total-price { 
+    font-weight: 900 !important; 
+    color: var(--primary-color); 
+    display: inline-block;
 }
-.navbar-nav .nav-link:hover {
-    color: white !important;
+
+.card-custom {
+    background-color: var(--card-bg); border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: none;
 }
 
 /* =========================================
-   4. パレットのデザイン
+   3. ボタン類 (テーマ連動)
    ========================================= */
-.theme-palette-container {
-    position: absolute;
-    top: 55px;
-    right: 0;
-    display: flex;
-    gap: 12px;
-    padding: 10px 15px;
-    background: rgba(255, 255, 255, 0.95);
+.submit-btn, .btn-otaku {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 900 !important;
+    border-radius: 50px !important;
+    padding: 12px 30px !important;
+    font-size: 1.1rem !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    width: 100%;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.submit-btn:hover, .btn-otaku:hover {
+    background-color: var(--primary-hover) !important;
+    transform: scale(1.02);
+}
+
+.selectable-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+
+.selectable-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 5px;
     border-radius: 50px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 2px solid var(--primary-color);
-    z-index: 1050;
-    opacity: 0;
-    transform: translateY(-10px) scale(0.9);
-    pointer-events: none;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid #eee;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 700;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.selectable-btn.active {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border-color: var(--accent-color) !important;
+}
+
+/* =========================================
+   4. ナビゲーション・パレット
+   ========================================= */
+.navbar-brand { font-weight: 900 !important; }
+.theme-palette-container {
+    position: absolute; top: 55px; right: 0; display: flex; gap: 12px; padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.95); border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 2px solid var(--primary-color); z-index: 1050; opacity: 0;
+    transform: translateY(-10px) scale(0.9); pointer-events: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .theme-palette-container.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-
-.theme-dot { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
-.theme-dot:hover { transform: scale(1.2); }
-.theme-dot.active { border-color: var(--text-color); }
+.theme-dot { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; transition: 0.2s; }
 .dot-pink { background-color: #ff85a2; }
 .dot-blue { background-color: #70d6ff; }
 .dot-yellow { background-color: #ffde70; }
@@ -82,38 +111,18 @@ h1, h2, h3, h4, h5, h6 { font-weight: 900; letter-spacing: 0.05em; margin-bottom
 .dot-green { background-color: #9ae8a8; }
 
 /* =========================================
-   5. パーツのデザイン
+   5. 痛バ・メッセージ
    ========================================= */
-.card-custom {
-    background-color: var(--card-bg); border-radius: var(--border-radius);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: none;
-}
-.total-price { font-weight: 900; color: var(--primary-color); }
-
-.selectable-btn {
-    flex: 1; padding: 12px; border-radius: 50px; border: 2px solid #eee;
-    background: #fff; cursor: pointer; transition: 0.2s; font-weight: bold; color: #888;
-}
-.selectable-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
-
-.submit-btn {
-    width: 100%; padding: 15px; background-color: var(--primary-color);
-    color: white; border: none; border-radius: var(--border-radius);
-    font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s;
-}
-.submit-btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
-
 .itabag-container {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-    gap: 10px; padding: 20px; background: rgba(255,255,255,0.6);
-    border-radius: var(--border-radius); border: 3px dashed #ddd; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; 
+    padding: 15px; background: rgba(255,255,255,0.6);
+    border-radius: var(--border-radius); border: 3px dashed #ddd; margin: 0 auto; max-width: 500px;
 }
 .badge-item {
-    aspect-ratio: 1/1; background: #e0e0e0; border-radius: 50%;
+    aspect-ratio: 1/1; background-color: #e0e0e0; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #aaa; font-weight: bold; transition: 0.3s;
+    font-size: 11px; color: #aaa; font-weight: bold; overflow: hidden;
+    border: 2px solid white; background-size: cover; background-position: center;
 }
-.badge-item.active {
-    background: var(--primary-color); color: white; border: 2px solid white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform: scale(1.1);
-}
+.badge-item.active { background-color: var(--primary-color); color: white; transform: scale(1.1); }
+.motivation-msg { background-color: #f8f9fa; border-radius: 15px; padding: 15px; font-size: 0.9rem; border-top: 3px solid var(--primary-color); }

@@ -4,14 +4,15 @@
     <div class="col-md-6">
         <div class="card-custom">
             <h1 class="h3">無駄遣い記録</h1>
-            <form action="{{ url_for('insert') }}" method="POST" id="insert-form">
+            <form action="{{ url_for('insert') }}" method="POST">
+                
                 <div class="mb-3">
-                    <label class="form-label fw-bold">日付</label>
+                    <label class="form-label fw-bold small">日付</label>
                     <input type="date" name="date" id="date-input" class="form-control" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">時間帯</label>
+                    <label class="form-label fw-bold small">時間帯</label>
                     <div class="selectable-group" id="time-group">
                         <button type="button" class="selectable-btn" data-value="朝">朝</button>
                         <button type="button" class="selectable-btn" data-value="昼">昼</button>
@@ -21,7 +22,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">カテゴリー</label>
+                    <label class="form-label fw-bold small">カテゴリー</label>
                     <div class="selectable-group" id="category-group">
                         <button type="button" class="selectable-btn" data-value="ドリンク">ドリンク</button>
                         <button type="button" class="selectable-btn" data-value="スナック">スナック</button>
@@ -32,14 +33,14 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">金額（円）</label>
-                    <input type="number" name="amount" class="form-control" placeholder="150" required>
+                    <label class="form-label fw-bold small">金額（円）</label>
+                    <input type="number" name="amount" class="form-control form-control-lg" placeholder="150" required>
                 </div>
 
-                <button type="submit" class="submit-btn mb-3 shadow-sm">登録する</button>
+                <button type="submit" class="submit-btn mb-3">登録する</button>
                 
                 <div class="text-center">
-                    <a href="{{ url_for('index') }}" class="btn btn-link text-decoration-none fw-bold" style="color: var(--text-color);">
+                    <a href="{{ url_for('index') }}" class="btn btn-link text-decoration-none fw-bold small" style="color: var(--text-color);">
                         &laquo; ホームに戻る
                     </a>
                 </div>
@@ -49,27 +50,25 @@
 </div>
 
 <script>
-    // ★修正：ページ読み込み時に常に当日の日付を設定
-    window.onload = function() {
+    document.addEventListener('DOMContentLoaded', () => {
         const dateInput = document.getElementById('date-input');
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        dateInput.value = `${year}-${month}-${day}`;
-    };
+        dateInput.value = new Date().toISOString().split('T')[0];
 
-    function setupSelect(groupId, hiddenId) {
-        const group = document.getElementById(groupId);
-        const hidden = document.getElementById(hiddenId);
-        group.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('selectable-btn')) return;
-            group.querySelectorAll('.selectable-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            hidden.value = e.target.dataset.value;
-        });
-    }
-    setupSelect('time-group', 'hidden-time');
-    setupSelect('category-group', 'hidden-category');
+        function setupSelect(groupId, hiddenId) {
+            const group = document.getElementById(groupId);
+            const hidden = document.getElementById(hiddenId);
+            const buttons = group.querySelectorAll('.selectable-btn');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    hidden.value = btn.getAttribute('data-value');
+                });
+            });
+        }
+        setupSelect('time-group', 'hidden-time');
+        setupSelect('category-group', 'hidden-category');
+    });
 </script>
 {% endblock %}
